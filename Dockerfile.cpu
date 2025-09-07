@@ -1,0 +1,38 @@
+FROM python:3.11-slim
+
+
+
+# Environment setup
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+ENV DEBIAN_FRONTEND=noninteractive
+ENV HF_HOME=/app/hf_cache
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    libsndfile1 \
+    ffmpeg \
+    git \
+    cmake && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
+
+
+# Set work directory
+WORKDIR /app
+
+# Copy requirements and install dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
+
+# Copy rest of the application
+COPY . .
+
+# Create needed directories
+RUN mkdir -p model_cache reference_audio outputs voices logs hf_cache
+
+# Expose port for FastAPI
+EXPOSE 8004
+
+# Start the app
+CMD ["python3", "server.py"]
